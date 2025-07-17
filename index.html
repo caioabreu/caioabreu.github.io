@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio Interativo - Sushi em Domicílio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A estrutura foi desenhada para guiar o cliente em uma jornada de descoberta. Começa com uma introdução, destaca os diferenciais (Informações Importantes), permite a exploração visual e interativa dos cardápios com cartões clicáveis para cada opção, que atualizam uma lista de itens dinâmica. Finaliza com uma ferramenta prática (Calculadora de Evento) que fornece um orçamento instantâneo. Essa abordagem, focada na tarefa do usuário (escolher um pacote e saber o custo), é mais eficaz e envolvente que uma lista estática. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Itens de cada cardápio -> Goal: Comparar conteúdo -> Viz/Presentation: Lista de itens dinâmica com checkmarks (HTML/JS) -> Interaction: A lista é atualizada ao clicar nos cartões de cada cardápio -> Justification: Permite uma comparação direta e clara do que está incluído em cada opção, valorizando os pacotes superiores.
+        - Report Info: Imagens dos cardápios -> Goal: Apelo visual e seleção -> Viz/Presentation: Imagem real para o cardápio completo, placeholders para os outros (HTML/CSS) -> Interaction: Clicar na imagem/cartão atualiza os detalhes do cardápio -> Justification: Torna a seleção do cardápio mais intuitiva e visualmente atraente.
+        - Report Info: Preço por pessoa e mínimo de convidados -> Goal: Calcular custo total -> Viz/Presentation: Input numérico e display de texto (HTML/JS) -> Interaction: O custo total para cada cardápio é calculado e exibido em tempo real conforme o usuário digita o número de convidados -> Justification: Ferramenta de alta utilidade que fornece feedback instantâneo e personalizado, aumentando o engajamento e a probabilidade de contato.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        .menu-card.active {
+            border-color: #991B1B; /* red-800 */
+            box-shadow: 0 4px 10px rgba(153, 27, 27, 0.2);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 200px;
+            max-height: 250px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+
+        <header class="text-center mb-12">
+            <h1 class="font-display text-4xl md:text-6xl text-red-900">Takas'Sushiman</h1>
+            <p class="text-lg md:text-xl text-stone-600 mt-2">A Experiência Japonesa no Conforto da Sua Casa</p>
+        </header>
+
+        <main>
+            <section id="info" class="mb-12">
+                <div class="grid md:grid-cols-3 gap-6 text-center">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                        <h3 class="font-bold text-lg text-red-900 mb-2">Eventos Aconchegantes</h3>
+                        <p class="text-stone-600">Nossos rodízios são planejados para um mínimo de 10 convidados, ideal para celebrações em família e com amigos.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                        <h3 class="font-bold text-lg text-red-900 mb-2">Cardápio Flexível</h3>
+                        <p class="text-stone-600">As opções de sushis e sashimis podem ser adaptadas de acordo com a sua preferência e a de seus convidados.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                        <h3 class="font-bold text-lg text-red-900 mb-2">Atenção a Todos</h3>
+                        <p class="text-stone-600">Temos deliciosas opções para veganos e preparos especiais sem glúten para alérgicos.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="menu-explorer" class="bg-white p-6 md:p-8 rounded-lg shadow-md border border-stone-200 mb-12">
+                <div class="text-center mb-8">
+                    <h2 class="font-display text-3xl md:text-4xl text-red-900">Nossos Cardápios</h2>
+                    <p class="text-stone-600 mt-2">Clique em um cardápio para ver os detalhes e itens inclusos.</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6 mb-8">
+                    <!-- Card for Simples -->
+                    <div class="menu-card cursor-pointer bg-stone-50 rounded-lg shadow-sm border border-stone-200 overflow-hidden transition-all duration-200 hover:shadow-md" data-id="simples">
+                        <div class="w-full h-40 bg-stone-200 flex items-center justify-center text-stone-500 text-sm p-4 text-center">
+                            <img src="https://instagram.fplu41-1.fna.fbcdn.net/v/t51.29350-15/330673055_604636024825068_9079461653379494143_n.jpg?stp=dst-jpg_e35_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQuaW1hZ2VfdXJsZ2VuLjE0NDB4MTA4MC5zZHIuZjI5MzUwLmRlZmF1bHRfaW1hZ2UifQ&_nc_ht=instagram.fplu41-1.fna.fbcdn.net&_nc_cat=100&_nc_oc=Q6cZ2QEzGzN2zb5ejlmzal8EHXZD5RxH89HJQSKw-Ny6UDeF7mSEIiq60PkgRqXPlDpbGag&_nc_ohc=U7Mm3-XNYU8Q7kNvwExnHAD&_nc_gid=wQHthJuJsMeiNzkeLsRGJQ&edm=AP4sbd4BAAAA&ccb=7-5&ig_cache_key=MzAzNjg1MjIwMTU0MTUyNjMyNw%3D%3D.3-ccb7-5&oh=00_AfQVQhe05nuciRn2o7N02BjRPIAv4csV8c7xsWiQ3QhlJg&oe=687DF9D6&_nc_sid=7a9f4b" alt="Imagem do Cardápio Simples" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-display text-xl text-red-900">Cardápio Simples</h3>
+                            <p class="text-lg font-bold text-stone-700">R$ 90 por pessoa</p>
+                        </div>
+                    </div>
+                    <!-- Card for Padrão -->
+                    <div class="menu-card cursor-pointer bg-stone-50 rounded-lg shadow-sm border border-stone-200 overflow-hidden transition-all duration-200 hover:shadow-md" data-id="padrao">
+                        <div class="w-full h-40 bg-stone-200 flex items-center justify-center text-stone-500 text-sm p-4 text-center">
+                            <img src="https://instagram.fplu41-1.fna.fbcdn.net/v/t51.29350-15/323485117_548667020613557_4593770180203602395_n.jpg?stp=dst-jpg_e35_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQuaW1hZ2VfdXJsZ2VuLjE0NDB4MTgwMC5zZHIuZjI5MzUwLmRlZmF1bHRfaW1hZ2UifQ&_nc_ht=instagram.fplu41-1.fna.fbcdn.net&_nc_cat=105&_nc_oc=Q6cZ2QEzGzN2zb5ejlmzal8EHXZD5RxH89HJQSKw-Ny6UDeF7mSEIiq60PkgRqXPlDpbGag&_nc_ohc=ZhaHcK5ZXNIQ7kNvwGm3bRO&_nc_gid=wQHthJuJsMeiNzkeLsRGJQ&edm=AP4sbd4BAAAA&ccb=7-5&ig_cache_key=MzAwOTkwMTcxNDI3NTM0MTEzMg%3D%3D.3-ccb7-5&oh=00_AfRMmztiZ13Aa_B8p1zH3rKj4t7DUnIPLChTHcuk6qBN7Q&oe=687E23DD&_nc_sid=7a9f4b" alt="Imagem do Cardápio Padrão" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-display text-xl text-red-900">Cardápio Padrão</h3>
+                            <p class="text-lg font-bold text-stone-700">R$ 120 por pessoa</p>
+                        </div>
+                    </div>
+                    <!-- Card for Completo -->
+                    <div class="menu-card cursor-pointer bg-stone-50 rounded-lg shadow-sm border border-stone-200 overflow-hidden transition-all duration-200 hover:shadow-md" data-id="completo">
+                        <div class="w-full h-40 bg-stone-200 flex items-center justify-center text-stone-500 text-sm p-4 text-center">
+                            <img src="https://instagram.fplu41-1.fna.fbcdn.net/v/t51.2885-15/518994147_17977365458886048_135611670961012735_n.jpg?stp=dst-jpg_e35_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6IkZFRUQuaW1hZ2VfdXJsZ2VuLjE0NDB4MTkyMC5zZHIuZjgyNzg3LmRlZmF1bHRfaW1hZ2UifQ&_nc_ht=instagram.fplu41-1.fna.fbcdn.net&_nc_cat=100&_nc_oc=Q6cZ2QHGnlaiEnfvK7z4YFnN8rS7MPmd3bi_PMjBL0omQZK7dIWoIO44UxGNdabYXUXh8KI&_nc_ohc=bdI9-sC-9EEQ7kNvwEm_gxP&_nc_gid=EtOzSOPIlENV3w4rcl3ZBw&edm=AA5fTDYBAAAA&ccb=7-5&ig_cache_key=MzY3ODI5NTU5NjAwNTA5NDAyNg%3D%3D.3-ccb7-5&oh=00_AfSaW_lncdx0SzEby8hDFabCRjuA6XAHp3MsyYsXdX-mwg&oe=687E06D0&_nc_sid=7edfe2" alt="Imagem do Cardápio Completo" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-display text-xl text-red-900">Cardápio Completo</h3>
+                            <p class="text-lg font-bold text-stone-700">R$ 140 por pessoa</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="menu-content" class="grid md:grid-cols-2 gap-8 items-start mb-8">
+                    <div id="menu-details" class="bg-stone-50 p-6 rounded-lg border border-stone-200">
+                        <h3 id="menu-title" class="font-display text-2xl text-red-900"></h3>
+                        <p id="menu-price" class="text-lg font-bold text-stone-700 mb-2"></p>
+                        <p id="menu-description" class="text-stone-600 mb-4"></p>
+                    </div>
+                    <div id="menu-items-list" class="bg-stone-50 p-6 rounded-lg border border-stone-200">
+                         <h4 class="font-bold text-lg text-red-900 mb-4">Itens Inclusos:</h4>
+                         <ul id="items-ul" class="space-y-2">
+                         </ul>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="calculator" class="bg-red-800 text-white p-6 md:p-8 rounded-lg shadow-lg">
+                <div class="text-center mb-6">
+                    <h2 class="font-display text-3xl md:text-4xl">Calcule o Custo do Seu Evento</h2>
+                    <p class="text-red-100 mt-2">Insira o número de convidados (mínimo 10) para ver o valor total.</p>
+                </div>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+                     <div class="w-full md:w-auto">
+                        <label for="guest-count" class="sr-only">Número de Convidados</label>
+                        <input type="number" id="guest-count" min="10" placeholder="Nº de convidados" class="w-full md:w-48 p-3 text-center text-lg font-bold text-stone-800 rounded-md border-2 border-transparent focus:outline-none focus:border-amber-300 focus:ring-2 focus:ring-amber-300">
+                    </div>
+                    <div id="total-costs" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center w-full">
+                        <div class="bg-red-900 p-4 rounded-md">
+                            <p class="font-bold text-red-200">Simples</p>
+                            <p id="total-simples" class="text-2xl font-bold">-</p>
+                        </div>
+                        <div class="bg-red-900 p-4 rounded-md">
+                            <p class="font-bold text-red-200">Padrão</p>
+                            <p id="total-padrao" class="text-2xl font-bold">-</p>
+                        </div>
+                        <div class="bg-red-900 p-4 rounded-md">
+                            <p class="font-bold text-red-200">Completo</p>
+                            <p id="total-completo" class="text-2xl font-bold">-</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center mt-12">
+            <p class="text-stone-600 font-bold text-lg">Pronto para agendar seu evento inesquecível?</p>
+            <p class="text-red-800 font-bold text-xl mt-2">(11) 96359-1521</p>
+            <p class="text-sm text-stone-500 mt-4">&copy; 2025 Takas' Sushiman. Todos os direitos reservados.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const menuData = {
+            simples: {
+                title: 'Cardápio Simples',
+                price: 90,
+                description: 'A essência do sushi e sashimi, com os favoritos que nunca saem de moda, perfeito para quem busca um evento mais direto e delicioso.',
+                items: ['Sashimi de Salmão e Peixe Branco', 'Sushis Diversos', 'Hot Roll']
+            },
+            padrao: {
+                title: 'Cardápio Padrão',
+                price: 120,
+                description: 'Uma seleção equilibrada dos clássicos e alguns toques especiais para agradar a todos os paladares.',
+                items: ['Sashimi de Salmão e Peixe Branco', 'Sushis Diversos', 'Hot Roll', 'Shimeji', 'Guioza', 'Rolinho Primavera', 'Salmão Flambado com Flor de Sal']
+            },
+            completo: {
+                title: 'Cardápio Completo',
+                price: 140,
+                description: 'Ideal para quem deseja uma experiência gastronômica completa, com uma vasta variedade de sabores e texturas.',
+                items: ['Sashimi de Salmão e Peixe Branco', 'Sushis Diversos', 'Hot Roll', 'Shimeji', 'Guioza', 'Rolinho Primavera', 'Salmão Flambado com Flor de Sal', 'Ceviche', 'Carpaccio de Salmão com Azeite Trufado']
+            }
+        };
+
+        const allItems = [
+            'Sashimi de Salmão e Peixe Branco',
+            'Sushis Diversos',
+            'Hot Roll',
+            'Shimeji',
+            'Guioza',
+            'Rolinho Primavera',
+            'Salmão Flambado com Flor de Sal',
+            'Ceviche',
+            'Carpaccio de Salmão com Azeite Trufado'
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuTitleEl = document.getElementById('menu-title');
+            const menuPriceEl = document.getElementById('menu-price');
+            const menuDescriptionEl = document.getElementById('menu-description');
+            const itemsUlEl = document.getElementById('items-ul');
+            const menuCards = document.querySelectorAll('.menu-card');
+            
+            const guestInput = document.getElementById('guest-count');
+            const totalSimplesEl = document.getElementById('total-simples');
+            const totalPadraoEl = document.getElementById('total-padrao');
+            const totalCompletoEl = document.getElementById('total-completo');
+
+            function formatCurrency(value) {
+                return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+
+            function updateMenuDisplay(menuKey) {
+                const menu = menuData[menuKey];
+                
+                menuTitleEl.textContent = menu.title;
+                menuPriceEl.textContent = `${formatCurrency(menu.price)} por pessoa`;
+                menuDescriptionEl.textContent = menu.description;
+
+                itemsUlEl.innerHTML = allItems.map(item => {
+                    const isIncluded = menu.items.includes(item);
+                    return `
+                        <li class="flex items-center transition-opacity duration-300 ${isIncluded ? 'opacity-100' : 'opacity-50'}">
+                            <span class="mr-2 ${isIncluded ? 'text-green-600' : 'text-red-400'}">${isIncluded ? '✓' : '✗'}</span>
+                            <span class="${isIncluded ? 'text-stone-800' : 'text-stone-500 line-through'}">${item}</span>
+                        </li>
+                    `;
+                }).join('');
+
+                menuCards.forEach(card => {
+                    card.classList.toggle('active', card.dataset.id === menuKey);
+                });
+            }
+
+            menuCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const menuKey = card.dataset.id;
+                    updateMenuDisplay(menuKey);
+                });
+            });
+
+            guestInput.addEventListener('input', () => {
+                const guests = parseInt(guestInput.value) || 0;
+                if (guests >= 10) {
+                    totalSimplesEl.textContent = formatCurrency(guests * menuData.simples.price);
+                    totalPadraoEl.textContent = formatCurrency(guests * menuData.padrao.price);
+                    totalCompletoEl.textContent = formatCurrency(guests * menuData.completo.price);
+                } else {
+                    totalSimplesEl.textContent = '-';
+                    totalPadraoEl.textContent = '-';
+                    totalCompletoEl.textContent = '-';
+                }
+            });
+            
+            updateMenuDisplay('padrao');
+        });
+    </script>
+</body>
+</html>
